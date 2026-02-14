@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mobile Car Racing Game</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial, Helvetica, sans-serif;
+}
+
+body{
+    background:#000;
+    overflow:hidden;
+}
+
+#game{
+    width:100%;
+    height:100vh;
+    position:relative;
+    overflow:hidden;
+    background:linear-gradient(#555,#222);
+}
+
+.road{
+    width:100%;
+    height:100%;
+    position:absolute;
+    background:repeating-linear-gradient(
+        #333 0px,
+        #333 40px,
+        #444 40px,
+        #444 80px
+    );
+    animation: roadMove 1s linear infinite;
+}
+
+@keyframes roadMove{
+    from{background-position-y:0px;}
+    to{background-position-y:80px;}
+}
+
+.player{
+    width:50px;
+    height:90px;
+    position:absolute;
+    bottom:30px;
+    left:50%;
+    transform:translateX(-50%);
+    background:red;
+    border-radius:10px;
+}
+
+.enemy{
+    width:50px;
+    height:90px;
+    position:absolute;
+    top:-120px;
+    background:yellow;
+    border-radius:10px;
+}
+
+.score{
+    position:absolute;
+    top:10px;
+    left:10px;
+    color:white;
+    font-size:20px;
+    font-weight:bold;
+    z-index:10;
+}
+
+.controls{
+    position:absolute;
+    bottom:10px;
+    width:100%;
+    display:flex;
+    justify-content:space-between;
+    padding:0 20px;
+}
+
+.btn{
+    width:70px;
+    height:70px;
+    border-radius:50%;
+    border:none;
+    font-size:30px;
+    background:#fff;
+    opacity:0.7;
+}
+
+.start{
+    position:absolute;
+    inset:0;
+    background:rgba(0,0,0,0.8);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    flex-direction:column;
+    color:white;
+}
+
+.start button{
+    padding:15px 40px;
+    font-size:22px;
+    border:none;
+    border-radius:10px;
+    background:lime;
+    margin-top:20px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="game">
+
+    <div class="road"></div>
+
+    <div class="score" id="score">Score : 0</div>
+
+    <div class="player" id="player"></div>
+
+    <div class="controls">
+        <button class="btn" id="left">⬅</button>
+        <button class="btn" id="right">➡</button>
+    </div>
+
+    <div class="start" id="start">
+        <h1>🚗 Car Racing Game</h1>
+        <button onclick="startGame()">START</button>
+    </div>
+
+</div>
+
+<script>
+const game = document.getElementById("game");
+const player = document.getElementById("player");
+const scoreBox = document.getElementById("score");
+const startScreen = document.getElementById("start");
+
+let gameRunning = false;
+let score = 0;
+let speed = 5;
+let playerX = window.innerWidth / 2 - 25;
+
+function startGame(){
+    gameRunning = true;
+    score = 0;
+    speed = 5;
+    startScreen.style.display = "none";
+    playerX = window.innerWidth / 2 - 25;
+    player.style.left = playerX + "px";
+    enemyLoop();
+    gameLoop();
+}
+
+function gameLoop(){
+    if(!gameRunning) return;
+
+    score++;
+    scoreBox.innerText = "Score : " + score;
+
+    if(score % 500 === 0){
+        speed++;
+    }
+
+    requestAnimationFrame(gameLoop);
+}
+
+function enemyLoop(){
+    if(!gameRunning) return;
+
+    const enemy = document.createElement("div");
+    enemy.classList.add("enemy");
+    enemy.style.left = Math.random() * (window.innerWidth - 50) + "px";
+    game.appendChild(enemy);
+
+    let enemyY = -120;
+
+    const move = setInterval(()=>{
+        if(!gameRunning){
+            clearInterval(move);
+            return;
+        }
+
+        enemyY += speed;
+        enemy.style.top = enemyY + "px";
+
+        if(collision(player, enemy)){
+            endGame();
+            clearInterval(move);
+        }
+
+        if(enemyY > window.innerHeight){
+            enemy.remove();
+            clearInterval(move);
+        }
+    },20);
+
+    setTimeout(enemyLoop,1000);
+}
+
+function collision(a,b){
+    const ar = a.getBoundingClientRect();
+    const br = b.getBoundingClientRect();
+
+    return !(
+        ar.bottom < br.top ||
+        ar.top > br.bottom ||
+        ar.right < br.left ||
+        ar.left > br.right
+    );
+}
+
+function endGame(){
+    gameRunning = false;
+    startScreen.style.display = "flex";
+    startScreen.innerHTML = `<h1>Game Over</h1><h2>Score : ${score}</h2><button onclick="startGame()">Restart</button>`;
+}
+
+/* Keyboard */
+document.addEventListener("keydown", e=>{
+    if(e.key === "ArrowLeft") moveLeft();
+    if(e.key === "ArrowRight") moveRight();
+});
+
+/* Touch buttons */
+document.getElementById("left").addEventListener("touchstart", moveLeft);
+document.getElementById("right").addEventListener("touchstart", moveRight);
+
+function moveLeft(){
+    if(playerX > 10){
+        playerX -= 40;
+        player.style.left = playerX + "px";
+    }
+}
+
+function moveRight(){
+    if(playerX < window.innerWidth - 60){
+        playerX += 40;
+        player.style.left = playerX + "px";
+    }
+}
+
+</script>
+
+</body>
+</html>
